@@ -1,0 +1,110 @@
+
+
+num_cols = [
+    'ClientPeriod',
+    'MonthlySpending',
+    'TotalSpent'
+]
+
+cat_cols = [
+    'Sex',
+    'IsSeniorCitizen',
+    'HasPartner',
+    'HasChild',
+    'HasPhoneService',
+    'HasMultiplePhoneNumbers',
+    'HasInternetService',
+    'HasOnlineSecurityService',
+    'HasOnlineBackup',
+    'HasDeviceProtection',
+    'HasTechSupportAccess',
+    'HasOnlineTV',
+    'HasMovieSubscription',
+    'HasContractPhone',
+    'IsBillingPaperless',
+    'PaymentMethod'
+]
+
+feature_cols = num_cols + cat_cols
+target_col = 'Churn'
+import seaborn as sns
+data.hist(column = num_cols)
+
+for column in cat_cols:
+  print(f"{column} distribution:")
+  print(data[column].value_counts())
+  print()
+
+fig, axarr = plt.subplots(4, 4, figsize=(16,16))
+i = [0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3]
+j = [0,1,2,3,0,1,2,3,0,1,2,3,0,1,2,3]
+for column in cat_cols:
+  sns.countplot(x=data[column], data=data, ax=axarr[i.pop()][j.pop()])
+
+labels = 'Churned', 'Retained'
+sizes = [data.Churn[data['Churn']==1].count(), data.Churn[data['Churn']==0].count()]
+explode = (0, 0.1)
+fig1, ax1 = plt.subplots(figsize=(8, 6))
+ax1.pie(sizes, explode=explode, labels=labels, autopct='%1.1f%%', startangle = 90)
+ax1.axis('equal')
+plt.title("Retained and churned customers")
+plt.show()
+
+
+X = data.drop(target_col, axis=1).copy()
+X = X.fillna(np.mean(X))
+y = data[target_col]
+
+num_transform = make_pipeline(SimpleImputer(), RobustScaler())
+cat_transform = make_pipeline(OneHotEncoder())
+
+preprocessor = ColumnTransformer(
+    transformers = [
+                    ('num', num_transform, num_cols),
+                    ('cat', cat_transform, cat_cols)
+    ]
+)
+
+clf = make_pipeline(preprocessor, LogisticRegression(C = 100, max_iter=1000, intercept_scaling=1.0, penalty='l2', tol=0.0001))
+
+optimizer = GridSearchCV(clf, param_grid = {'logisticregression__C': [100, 10, 1, 0.1, 0.01, 0.001]}, cv = 5, refit=True, scoring='roc_auc')
+optimizer.fit(X, y)
+print(optimizer.best_params_)
+print(optimizer.best_score_)
+
+
+!pip install catboost
+import catboost as catboost
+X_train, X_test, y_train, y_test = train_test_split(X, y, 
+                                                       train_size=0.8, 
+                                                       random_state=42)
+boosting_model = catboost.CatBoostClassifier(n_estimators=100,
+                                             cat_features=cat_cols)
+# boosting_model.grid_search({'n_estimators': [50, 100, 120, 130, 140, 200],'l2_leaf_reg': np.linspace(0, 1, 20), 'depth':[1, 5, 10, 20, 50, 100]}, 
+#                           X_train, 
+#                           y_train)
+boosting_model.fit(X_train, y_train)
+
+y_train_predicted = boosting_model.predict_proba(X_train)[:, 1]
+y_test_predicted = boosting_model.predict_proba(X_test)[:, 1]
+from sklearn.metrics import roc_curve
+from sklearn.metrics import auc
+
+train_auc = roc_auc_score(y_train, y_train_predicted)
+test_auc = roc_auc_score(y_test, y_test_predicted)
+
+plt.figure(figsize=(10,7))
+plt.plot(*roc_curve(y_train, y_train_predicted)[:2], label='train AUC={:.4f}'.format(train_auc))
+plt.plot(*roc_curve(y_test, y_test_predicted)[:2], label='test AUC={:.4f}'.format(test_auc))
+legend_box = plt.legend(fontsize='large', framealpha=1).get_frame()
+legend_box.set_facecolor("white")
+legend_box.set_edgecolor("black")
+plt.plot(np.linspace(0,1,100), np.linspace(0,1,100))
+plt.show()
+best_model = boosting_model
+
+X_test = pd.read_csv('/content/drive/My Drive/HW3/test.csv')
+submission = pd.read_csv('/content/drive/My Drive/HW3/submission.csv')
+
+submission['Churn'] =  best_model.predict_proba(X_test)[:, 1] #best_model.predict(X_test)
+submission.to_csv('/my_submission7.csv',index=False)
