@@ -4,7 +4,8 @@ import numpy as np
 df = pd.read_csv("https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/Marketing_subscription_prediction_latest_ed
 df = pd.read_csv("https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/german_credit_data.csv")
 df1 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/mark.csv',header = 0)
-df2 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/student.csv',header = 0)        
+df2 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/student.csv',header = 0)    
+df = pd.read_csv('weather.csv')
                  
 # Create a list for x
 x = ['Boston Celtics','Los Angeles Lakers', 'Chicago Bulls', 'Golden State Warriors', 'San Antonio Spurs']
@@ -102,6 +103,15 @@ data_column_numeric = df.select_dtypes(include=[np.number]).columns
 df_onehot_category_frame = pd.get_dummies(df[data_column_category])
 final_encoded_df = pd.concat([df[data_column_numeric],df_onehot_category_frame],axis=1)
 final_encoded_df.head()
+
+# dummy code 'Summary'                 
+df_dummies = pd.get_dummies(df, drop_first=True)   
+# shuffle df_dummies
+df_shuffled = shuffle(df_dummies, random_state=42)  
+# split df_shuffled into X and y
+DV = 'Rain' # Save the DV as DV
+X = df_shuffled.drop(DV, axis=1) # get features (X)
+y = df_shuffled[DV] # get DV (y)                 
                  
 #Select all the columns which are not numeric, using the following code and implement further.
 data_column_category = df.select_dtypes(exclude=[np.number]).columns  
