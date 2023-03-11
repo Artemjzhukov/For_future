@@ -2,6 +2,7 @@
 from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
 
+
 # scale X_train and X_test
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler()
@@ -65,3 +66,25 @@ print(cm)
 # generate a classification report
 from sklearn.metrics import classification_report
 print(classification_report(y_test, predicted_class))
+
+###GRID
+
+# Specify the hyperparameter space
+import numpy as np
+grid = {'criterion': ['mse','mae'],
+        'max_features': ['auto', 'sqrt', 'log2', None],
+        'min_impurity_decrease': np.linspace(0.0, 1.0, 10),
+        'bootstrap': [True, False],
+        'warm_start': [True, False]}
+
+# Instantiate the GridSearchCV model
+from sklearn.model_selection import GridSearchCV
+from sklearn.ensemble import RandomForestRegressor
+model = GridSearchCV(RandomForestRegressor(), grid, scoring='explained_variance', cv=5)
+
+# Fit to the training set
+model.fit(X_train_scaled, y_train)
+
+# Print the tuned parameters
+best_parameters = model.best_params_
+print(best_parameters)
