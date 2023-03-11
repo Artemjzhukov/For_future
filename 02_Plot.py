@@ -91,6 +91,21 @@ plt.ylabel('Height') # label y-axis
 plt.title(title) # set programmatic title
 plt.show() # print plot
 
+from scipy.stats import pearsonr
+plt.scatter(y_test, predictions)
+plt.xlabel('Y Test (True Values)')
+plt.ylabel('Predicted Values')
+plt.title('Predicted vs. Actual Values (r = {0:0.2f})'.format(pearsonr(y_test, predictions)[0], 2))
+plt.show()
+
+###DISTRIBUTION
+from scipy.stats import shapiro
+sns.distplot((y_test - predictions), bins = 50)
+plt.xlabel('Residuals')
+plt.ylabel('Density')
+plt.title('Histogram of Residuals (Shapiro W p-value = {0:0.3f})'.format(shapiro(y_test - predictions)[1]))
+plt.show()
+
 ###SUB PLOTS
 fig, axes = plt.subplots() # create figure and set of axes ????????????
 fig, axes = plt.subplots(nrows=1, ncols=2)
