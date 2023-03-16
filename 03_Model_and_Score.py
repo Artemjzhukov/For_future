@@ -242,12 +242,61 @@ labels_df['row_mode'] = row_mode
 
 # preview the data
 print(labels_df.head(5))
+-------------------------------------------------
+from sklearn.cluster import KMeans
+model = KMeans(n_clusters=2)
+
+# fit model
+model.fit(scaled_features)
+
+# get predicted labels
+labels = model.labels_
+
+# see how many of each label we have
+import pandas as pd
+pd.value_counts(labels)
+
+# add label to df_shuffled
+df_shuffled['Predicted_Cluster'] = labels
+print(df_shuffled.head(5))
+
+mean_inertia_list = [] # create a list for the average inertia at each n_clusters
+for x in range(1, 11): # loop through n_clusters 1-10
+    inertia_list = [] # create a list for each individual inertia value at n_cluster
+    for i in range(100):
+        model = KMeans(n_clusters=x) # instantiate model
+        model.fit(scaled_features) # fit model
+        inertia = model.inertia_ # get inertia
+        inertia_list.append(inertia) # append inertia to inertia_list
+    # moving to the outside loop
+    mean_inertia = np.mean(inertia_list) # get mean of inertia list
+    mean_inertia_list.append(mean_inertia) # append mean_inertia to mean_inertia_list
+print(mean_inertia_list) 
+
+# plot inertia by n_clusters
+import matplotlib.pyplot as plt
+x = list(range(1, len(mean_inertia_list)+1))
+y = mean_inertia_list
+plt.plot(x, y)
+plt.title('Mean Inertia by n_clusters')
+plt.xlabel('n_clusters')
+plt.xticks(x)
+plt.ylabel('Mean Inertia')
+plt.show()
 
 ###Mean Inertia by Cluster After PCA Transformation
 
+# instantiate PCA model
+from sklearn.decomposition import PCA
+model = PCA()
+# fit model
+model.fit(scaled_features)
+# get proportion of explained variance in each component
+explained_var_ratio = model.explained_variance_ratio_
+# print the explained variance ratio
+print(explained_var_ratio)
 from sklearn.decomposition import PCA
 model = PCA(n_components=best_n_components) # remember, best_n_components = 6
-
 # fit model and transform scaled_features into best_n_components
 df_pca = model.fit_transform(scaled_features)
 
@@ -269,9 +318,107 @@ for x in range(1, 11): # loop through n_clusters 1-10
 # print mean_inertia_list_PCA
 print(mean_inertia_list_PCA)  
 
+# plot inertia by n_clusters with both lines
+import matplotlib.pyplot as plt
+x = list(range(1,len(mean_inertia_list_PCA)+1))
+y = mean_inertia_list_PCA
+y2 = mean_inertia_list 
+plt.plot(x, y, label='PCA')
+plt.plot(x, y2, label='No PCA')
+plt.title('Mean Inertia by n_clusters for Original Features and PCA Transformed Features')
+plt.xlabel('n_clusters')
+plt.xticks(x)
+plt.ylabel('Inertia')
+plt.legend()
+plt.show()
+
+###LDA MODEL
+# instantiate LDA model
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+model = LinearDiscriminantAnalysis()
+
+# fit the model on the training data
+model.fit(X_train_scaled, y_train)
+
+# compute explained ratio by component
+model.explained_variance_ratio_
+
+# transform the training features to the training components
+X_train_LDA = model.transform(X_train_scaled) 
+
+# transform the testing features to the testing components
+X_test_LDA = model.transform(X_test_scaled) 
+
+# create a random forest model
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier() 
+
+# fit the model on the training components
+model.fit(X_train_LDA, y_train) 
+
+# generate predictions on the testing components
+predictions = model.predict(X_test_LDA) 
+
+# style the confusion matrix
+from sklearn.metrics import confusion_matrix 
+import pandas as pd
+import numpy as np
+cm = pd.DataFrame(confusion_matrix(y_test, predictions))
+cm['Total'] = np.sum(cm, axis=1)
+cm = cm.append(np.sum(cm, axis=0), ignore_index=True)
+cm.columns = ['Predicted 1', 'Predicted 2', 'Predicted 3', 'Total']
+cm = cm.set_index([['Actual 1', 'Actual 2', 'Actual 3', 'Total']])
+print(cm)
+
+# to get the accuracy score
+from sklearn.metrics import accuracy_score
+accuracy_score(y_test, predictions)
+
 ###SCALER
 # scale X_train and X_test
 from sklearn.preprocessing import StandardScaler
 scaler = StandardScaler() # instantiate StandardScaler model
 X_train_scaled = scaler.fit_transform(X_train) # transform X_train to z-scores
 X_test_scaled = scaler.transform(X_test) # transform X_test to z-scores
+
+### HCA MODEL
+# create linkage model
+from scipy.cluster.hierarchy import linkage 
+model = linkage(scaled_features, method='complete')
+
+import matplotlib.pyplot as plt 
+from scipy.cluster.hierarchy import dendrogram
+plt.figure(figsize=(10,5))
+plt.title('Dendrogram for Glass Data')
+dendrogram(model,
+           leaf_rotation=90,
+           leaf_font_size=6)
+plt.show()
+
+# get labels
+from scipy.cluster.hierarchy import fcluster 
+labels = fcluster(model, t=9, criterion='distance')
+print(labels)
+
+# assign labels array as a column in df_shuffled
+df_shuffled['Predicted_Cluster'] = labels
+
+# preview data
+print(df_shuffled.head(5))
+
+-----------------------
+import numpy as np
+cum_sum_explained_var = np.cumsum(model.explained_variance_ratio_)
+print(cum_sum_explained_var)
+
+# set a threshold for % of variance in the data to preserve
+threshold = .95
+for i in range(len(cum_sum_explained_var)):
+    if cum_sum_explained_var[i] >= threshold:
+        best_n_components = i+1
+        break
+    else:
+        pass
+    
+# print the best number of n_components
+print('The best n_components is {}'.format(best_n_components))
