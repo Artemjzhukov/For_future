@@ -7,6 +7,10 @@ df1 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Scienc
 df2 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/student.csv',header = 0)    
 df = pd.read_csv('weather.csv')
                  
+data = pd.read_csv("data/adult-data.csv", names=['age', 'workclass', 'education-num',
+                                                 'occupation', 'capital-gain', 'capital-loss',
+                                                 'hours-per-week', 'income'])                 
+                 
 # Create a list for x
 x = ['Boston Celtics','Los Angeles Lakers', 'Chicago Bulls', 'Golden State Warriors', 'San Antonio Spurs']
 # Create a list for y
@@ -63,7 +67,14 @@ info
 
                  ## DROP AND FILL
                  
+data['workclass'] = LabelEncoder().fit_transform(data['workclass'])
+data['occupation'] = LabelEncoder().fit_transform(data['occupation'])
+data['income'] = LabelEncoder().fit_transform(data['income'])
 
+X = data.copy()
+X.drop("income", inplace = True, axis = 1)
+Y = data.income
+                 
 #Impute the numerical data of the age column with its mean                
 mean_age = df.age.mean()
 df.age.fillna(mean_age,inplace=True)   
@@ -73,7 +84,9 @@ df. duration.fillna(median_duration,inplace=True)
 #Impute the categorical data of the contact column with its mode.
 mode_contact = df.contact.mode()[0]
 df.contact.fillna(mode_contact,inplace=True)                 
-df1 = df['Price']                 
+df1 = df['Price']      
+                 
+data.drop('customerID', axis = 1, inplace = True)                 
 
 X = df.drop('Price', axis=1)                 
 #removing Null values
@@ -81,12 +94,26 @@ df = df.dropna()
 #Total number of null in each column
 df.isna().sum()
                  
+data.isnull().sum()
+
+data.iloc[0]
+                 
 df.iloc[0:4,0:3]
 df.loc[0:4,["Avg. Area Income", "Avg. Area House Age"]]                 
                
 
                  ## SEPARATE
                  
+data['Day'], data['Month'] = data.Date.str[:2], data.Date.str[3:5]
+data = data.drop(['Unnamed: 0', 'Date'], axis = 1)
+
+label_dict = defaultdict(LabelEncoder)
+
+data[['region', 'type', 'Day', 'Month', 'year']] = data[['region', 'type', 'Day', 'Month', 'year']].apply(lambda x: label_dict[x.name].fit_transform(x))
+
+X = data
+y = X.pop('AveragePrice')                 
+---------------------------------------------                 
 df.education.unique()
 #Let us group "basic.4y", "basic.9y" and "basic.6y" together and call them "basic".
 #To do so, we can use replace function from pandas
@@ -129,6 +156,73 @@ label_encoder = LabelEncoder()
 for i in data_column_category:
     df[i] = label_encoder.fit_transform(df[i])   
                  
+
+data.iloc[0] 
+gender                        Female
+SeniorCitizen                      0
+Partner                          Yes
+Dependents                        No
+tenure                             1
+PhoneService                      No
+MultipleLines       No phone service
+InternetService                  DSL
+OnlineSecurity                    No
+OnlineBackup                     Yes
+DeviceProtection                  No
+TechSupport                       No
+StreamingTV                       No
+StreamingMovies                   No
+Contract              Month-to-month
+PaperlessBilling                 Yes
+PaymentMethod       Electronic check
+MonthlyCharges                 29.85
+TotalCharges                   29.85
+Churn                             No
+Name: 0, dtype: object
+
+data['gender'] = LabelEncoder().fit_transform(data['gender'])
+data['Partner'] = LabelEncoder().fit_transform(data['Partner'])
+data['Dependents'] = LabelEncoder().fit_transform(data['Dependents'])
+data['PhoneService'] = LabelEncoder().fit_transform(data['PhoneService'])
+data['MultipleLines'] = LabelEncoder().fit_transform(data['MultipleLines'])
+data['InternetService'] = LabelEncoder().fit_transform(data['InternetService'])
+data['OnlineSecurity'] = LabelEncoder().fit_transform(data['OnlineSecurity'])
+data['OnlineBackup'] = LabelEncoder().fit_transform(data['OnlineBackup'])
+data['DeviceProtection'] = LabelEncoder().fit_transform(data['DeviceProtection'])
+data['TechSupport'] = LabelEncoder().fit_transform(data['TechSupport'])
+data['StreamingTV'] = LabelEncoder().fit_transform(data['StreamingTV'])
+data['StreamingMovies'] = LabelEncoder().fit_transform(data['StreamingMovies'])
+data['Contract'] = LabelEncoder().fit_transform(data['Contract'])
+data['PaperlessBilling'] = LabelEncoder().fit_transform(data['PaperlessBilling'])
+data['PaymentMethod'] = LabelEncoder().fit_transform(data['PaymentMethod'])
+data['Churn'] = LabelEncoder().fit_transform(data['Churn'])
+
+data.dtypes
+
+gender                int32
+SeniorCitizen         int64
+Partner               int32
+Dependents            int32
+tenure                int64
+PhoneService          int32
+MultipleLines         int32
+InternetService       int32
+OnlineSecurity        int32
+OnlineBackup          int32
+DeviceProtection      int32
+TechSupport           int32
+StreamingTV           int32
+StreamingMovies       int32
+Contract              int32
+PaperlessBilling      int32
+PaymentMethod         int32
+MonthlyCharges      float64
+TotalCharges         object
+Churn                 int32
+dtype: object
+
+                 
+                 
 ###Performing Onehot Encoding
 onehot_encoder = OneHotEncoder(sparse=False)
 onehot_encoded = onehot_encoder.fit_transform(df[data_column_category])
@@ -151,6 +245,10 @@ scaled_frame = pd.DataFrame(norm_scale,columns=df.columns)
 df_categorical = df.select_dtypes(exclude=np.number)                 
                  
 ###Splitting the data with train and test
+                 
+X_train, X_test = X[:int(X.shape[0]*0.8)].values, X[int(X.shape[0]*0.8):].values
+Y_train, Y_test = Y[:int(Y.shape[0]*0.8)].values, Y[int(Y.shape[0]*0.8):].values
+                 
 #Segregating Independent and Target variable
 X=final_encoded_df.drop(columns='y')
 y=final_encoded_df['y']
