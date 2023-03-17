@@ -422,3 +422,240 @@ for i in range(len(cum_sum_explained_var)):
     
 # print the best number of n_components
 print('The best n_components is {}'.format(best_n_components))
+
+### XGB 
+
+import pandas as pd
+import xgboost as xgb
+import numpy as np
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
+
+data = pd.read_csv("data/adult-data.csv", names=['age', 'workclass', 'education-num',
+                                                 'occupation', 'capital-gain', 'capital-loss',
+                                                 'hours-per-week', 'income'])
+data.tail()
+data['workclass'] = LabelEncoder().fit_transform(data['workclass'])
+data['occupation'] = LabelEncoder().fit_transform(data['occupation'])
+data['income'] = LabelEncoder().fit_transform(data['income'])
+
+X = data.copy()
+X.drop("income", inplace = True, axis = 1)
+Y = data.income
+
+X_train, X_test = X[:int(X.shape[0]*0.8)].values, X[int(X.shape[0]*0.8):].values
+Y_train, Y_test = Y[:int(Y.shape[0]*0.8)].values, Y[int(Y.shape[0]*0.8):].values
+
+train = xgb.DMatrix(X_train, label=Y_train)
+test = xgb.DMatrix(X_test, label=Y_test)
+
+param = {'max_depth':7, 'eta':0.1, 'silent':1, 'objective':'binary:hinge'}
+num_round = 50
+model = xgb.train(param, train, num_round)
+
+preds = model.predict(test)
+
+accuracy = accuracy_score(Y[int(Y.shape[0]*0.8):].values, preds)
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
+---------------------
+train = xgb.DMatrix(X_train, label=Y_train)
+test = xgb.DMatrix(X_test, label=Y_test)
+
+test_error = {}
+for i in range(20):
+    param = {'max_depth':i, 'eta':0.1, 'silent':1, 'objective':'binary:hinge'}
+    num_round = 50
+    model_metrics = xgb.cv(param, train, num_round, nfold = 10)
+    test_error[i] = model_metrics.iloc[-1]['test-error-mean']
+
+plt.scatter(test_error.keys(),test_error.values())
+plt.xlabel('Max Depth')
+plt.ylabel('Test Error')
+plt.show()
+
+
+param = {'max_depth':4, 'eta':0.1, 'silent':1, 'objective':'binary:hinge'}
+num_round = 300
+model_metrics = xgb.cv(param, train, num_round, nfold = 10)
+
+plt.scatter(range(300),model_metrics['test-error-mean'], s = 0.7, label = 'Test Error')
+plt.scatter(range(300),model_metrics['train-error-mean'], s = 0.7, label = 'Train Error')
+plt.legend()
+plt.show()
+
+param = {'max_depth':4, 'eta':0.1, 'silent':1, 'objective':'binary:hinge'}
+num_round = 100
+model = xgb.train(param, train, num_round)
+preds = model.predict(test)
+accuracy = accuracy_score(Y[int(Y.shape[0]*0.8):].values, preds)
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
+
+Accuracy: 79.77%
+
+model.save_model('churn-model.model')
+-----------------------------------------
+train = xgb.DMatrix(X_train, label=Y_train)
+test = xgb.DMatrix(X_test, label=Y_test)
+
+param = {'max_depth':6, 'eta':0.1, 'silent':1, 'objective':'multi:softmax', 'num_class': 3}
+num_round = 5
+model = xgb.train(param, train, num_round)
+
+preds = model.predict(test)
+
+accuracy = accuracy_score(Y[int(Y.shape[0]*0.8):].values, preds)
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
+
+Accuracy: 89.77%
+------------------------------------------
+train = xgb.DMatrix(X_train, label=Y_train)
+test = xgb.DMatrix(X_test, label=Y_test)
+
+test_error = {}
+
+for i in range(20):
+    param = {'max_depth':i, 'eta':0.1, 'silent':1, 'objective':'binary:hinge'}
+    num_round = 50
+    model_metrics = xgb.cv(param, train, num_round, nfold = 10)
+    test_error[i] = model_metrics.iloc[-1]['test-error-mean']
+
+plt.scatter(test_error.keys(),test_error.values())
+plt.xlabel('Max Depth')
+plt.ylabel('Test Error')
+plt.show()
+
+test_error = {}
+
+for i in range(1,100,5):
+    param = {'max_depth':9, 'eta':0.001*i, 'silent':1, 'objective':'binary:hinge'}
+    num_round = 500
+    model_metrics = xgb.cv(param, train, num_round, nfold = 10)
+    test_error[i] = model_metrics.iloc[-1]['test-error-mean']
+
+lr = [0.001*(i) for i in test_error.keys()]
+plt.scatter(lr,test_error.values())
+plt.xlabel('Learning Rate')
+plt.ylabel('Error')
+plt.show()
+
+param = {'max_depth':9, 'eta':0.04, 'silent':1, 'objective':'binary:hinge'}
+num_round = 500
+model_metrics = xgb.cv(param, train, num_round, nfold = 10)
+
+plt.scatter(range(500),model_metrics['test-error-mean'], s = 0.7, label = 'Test Error')
+plt.scatter(range(500),model_metrics['train-error-mean'], s = 0.7, label = 'Train Error')
+plt.legend()
+plt.show()
+
+list(model_metrics['test-error-mean']).index(min(model_metrics['test-error-mean'])) 
+
+139
+
+-----------------------------------------------
+
+data[['workclass', 'occupation', 'income']] = data[['workclass', 'occupation', 'income']].apply(lambda x: x.str.strip())
+
+label_dict = defaultdict(LabelEncoder)
+
+data[['workclass', 'occupation', 'income']] = data[['workclass', 'occupation', 'income']].apply(lambda x: label_dict[x.name].fit_transform(x))
+
+def save_obj(var, file):
+    with open(file + '.pkl', 'wb') as f:
+        pickle.dump(var, f, pickle.HIGHEST_PROTOCOL)
+def load_obj(file):
+    with open(file + '.pkl', 'rb') as f:
+        return pickle.load(f)
+
+save_obj(label_dict, 'income_labels')
+
+X = data.copy()
+X.drop("income", inplace = True, axis = 1)
+Y = data.income
+
+X_train, X_test = X[:int(X.shape[0]*0.8)].values, X[int(X.shape[0]*0.8):].values
+Y_train, Y_test = Y[:int(Y.shape[0]*0.8)].values, Y[int(Y.shape[0]*0.8):].values
+
+train = xgb.DMatrix(X_train, label=Y_train)
+test = xgb.DMatrix(X_test, label=Y_test)
+
+param = {'max_depth':7, 'eta':0.1, 'silent':1, 'objective':'binary:hinge'}
+num_round = 50
+model = xgb.train(param, train, num_round)
+
+preds = model.predict(test)
+
+accuracy = accuracy_score(Y[int(Y.shape[0]*0.8):].values, preds)
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
+
+Accuracy: 83.66%
+
+model.save_model('income-model.model')
+
+### KERAS
+from keras.models import Sequential
+from keras.layers import Dense
+model = Sequential()
+model.add(Dense(units=8, activation='relu', input_dim=7))
+model.add(Dense(units=16, activation='relu'))
+model.add(Dense(units=1, activation='sigmoid'))
+
+model.compile(loss='binary_crossentropy',
+              optimizer='sgd',
+              metrics=['accuracy'])
+
+model.fit(X_train, Y_train, epochs=5, batch_size=8)
+
+Epoch 1/5
+352/352 [==============================] - 0s 1ms/step - loss: 3.3547 - acc: 0.4318 
+Epoch 2/5
+352/352 [==============================] - 0s 190us/step - loss: -5.6614 - acc: 0.6449
+Epoch 3/5
+352/352 [==============================] - 0s 179us/step - loss: -5.6614 - acc: 0.6449
+Epoch 4/5
+352/352 [==============================] - 0s 185us/step - loss: -5.6614 - acc: 0.6449
+Epoch 5/5
+352/352 [==============================] - 0s 170us/step - loss: -5.6614 - acc: 0.6449
+
+<keras.callbacks.History at 0x268a58a5470>
+
+preds = model.predict(X_test, batch_size=128)
+
+accuracy = accuracy_score(Y_test, preds.astype(int))
+print("Accuracy: %.2f%%" % (accuracy * 100.0))
+
+Accuracy: 80.68%
+------------------------
+filepath="avocado-{epoch:02d}-{val_loss:.2f}.hdf5"
+model_ckpt = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
+es = EarlyStopping(monitor='val_loss', min_delta=1, patience=5, verbose=1)
+callbacks = [model_ckpt, es]
+
+model = Sequential()
+model.add(Dense(units=16, activation='relu', input_dim=13))
+model.add(Dense(units=8, activation='relu'))
+model.add(Dense(units=1, activation='linear'))
+
+model.compile(loss='mse', optimizer='adam')
+
+model.summary()
+
+_________________________________________________________________
+Layer (type)                 Output Shape              Param #   
+=================================================================
+dense_55 (Dense)             (None, 16)                224       
+_________________________________________________________________
+dense_56 (Dense)             (None, 8)                 136       
+_________________________________________________________________
+dense_57 (Dense)             (None, 1)                 9         
+=================================================================
+Total params: 369
+Trainable params: 369
+Non-trainable params: 0
+_________________________________________________________________
+
+model.fit(X_train, y_train, validation_data = (X_test, y_test), epochs=40, batch_size=32, callbacks = callbacks)
+
+
+
+
+
