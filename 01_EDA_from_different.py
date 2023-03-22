@@ -52,7 +52,12 @@ df_categorical.Gender.value_counts()
 df.education.unique()  
 df_categorical['Grade'].unique()
                  
- 
+# create a new 'Location' Series (must use bracket notation to define the Series name)
+ufo['Location'] = ufo.City + ', ' + ufo.State 
+# select the 'City' Series using bracket notation
+ufo['City']
+# or equivalently, use dot notation
+ufo.City
 
 
                  
