@@ -26,8 +26,16 @@ y = np.random.normal(loc=0, scale=0.1, size=100) # 100 numbers with mean of 0 an
 print("Number of rows and columns : ",df.shape)
 df.shape
                  
+# example attribute: data type of each column
+movies.dtypes
+                 
+# use an optional parameter to the describe method to summarize only 'object' columns
+movies.describe(include=['object'])
+                 
 #Basic Statistics of each column
 df.describe().transpose()
+                 
+http://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.describe.html
                  
 #Basic Information of each column
 df.info()
