@@ -126,6 +126,13 @@ df.isna().sum()
                  
 data.isnull().sum()
 
+#And we will need to clean up 'Date of Publication'. So we will use a regular expression to extract our cleaned values:
+regex = r'^(\d{4})'
+extr = df['Date of Publication'].str.extract(r'^(\d{4})', expand=False)
+#Now lets convert these to a numeric type and copy them back:
+df['Date of Publication'] = pd.to_numeric(extr)
+df['Date of Publication'].dtype
+
 #We can now use loc[] to do key-based locating:
 Or we could use iloc[] to access our entries by index (instead of by key):
 data.iloc[0]
