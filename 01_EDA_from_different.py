@@ -42,14 +42,21 @@ df.info()
 df.head()
 df.tail()                 
                  
-
+#It looks like the Identifier column is unique, let's check this:
+df['Identifier'].is_unique
 #Print the index names of the data frame. Using the command df.index
 df.index
 #Make the address column as an index and reset it back to the original data frame.
+df = df.set_index('Identifier')
+#Or instead
+df.set_index('Identifier', inplace=True)
 df.set_index('Address', inplace=True)     
 #Undo                 
 df.reset_index(inplace=True) 
-                 
+
+
+Lets see what datatypes we have:
+df.get_dtype_counts()
 #Frequency distribution of Education column
 df.education.value_counts()   
 #Find the frequency distribution of each categorical column      
@@ -80,6 +87,16 @@ info
 
                  ## DROP AND FILL
                  
+to_drop = ['Edition Statement',
+...            'Corporate Author',
+...            'Corporate Contributors',
+...            'Former owner',
+...            'Engraver',
+...            'Contributors',
+...            'Issuance type',
+...            'Shelfmarks']
+>>> df.drop(to_drop, inplace=True, axis=1)
+
 data['workclass'] = LabelEncoder().fit_transform(data['workclass'])
 data['occupation'] = LabelEncoder().fit_transform(data['occupation'])
 data['income'] = LabelEncoder().fit_transform(data['income'])
@@ -109,9 +126,12 @@ df.isna().sum()
                  
 data.isnull().sum()
 
+#We can now use loc[] to do key-based locating:
+Or we could use iloc[] to access our entries by index (instead of by key):
 data.iloc[0]
-                 
 df.iloc[0:4,0:3]
+
+df.loc[1905:, 'Date of Publication'].head(10)
 df.loc[0:4,["Avg. Area Income", "Avg. Area House Age"]]                 
                
 
