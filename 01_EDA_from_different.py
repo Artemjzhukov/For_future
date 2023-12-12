@@ -5,6 +5,7 @@ df = pd.read_csv("https://raw.githubusercontent.com/TrainingByPackt/Data-Science
 df = pd.read_csv("https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/german_credit_data.csv")
 df1 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/mark.csv',header = 0)
 df2 = pd.read_csv('https://raw.githubusercontent.com/TrainingByPackt/Data-Science-with-Python/master/Chapter01/Data/student.csv',header = 0)    
+If you know in advance which columns you’d like to retain, another option is to pass them to the ##usecols argument of pd.read_csv.
 df = pd.read_csv('weather.csv')
                  
 data = pd.read_csv("data/adult-data.csv", names=['age', 'workclass', 'education-num',
@@ -104,6 +105,22 @@ data['income'] = LabelEncoder().fit_transform(data['income'])
 X = data.copy()
 X.drop("income", inplace = True, axis = 1)
 Y = data.income
+data.drop('customerID', axis = 1, inplace = True)   
+X = df.drop('Price', axis=1)                 
+#removing Null values
+df = df.dropna()
+
+#Total number of null in each column
+df.isna().sum()
+                 
+data.isnull().sum()
+               
+#finding the data types of each column and checking for null
+null_ = df.isna().any()
+dtypes = df.dtypes
+sum_na_ = df.isna().sum()
+info = pd.concat([null_,sum_na_,dtypes],axis = 1,keys = ['isNullExist','NullSum','type'])
+info                 
                  
 #Impute the numerical data of the age column with its mean                
 mean_age = df.age.mean()
@@ -115,23 +132,16 @@ df. duration.fillna(median_duration,inplace=True)
 mode_contact = df.contact.mode()[0]
 df.contact.fillna(mode_contact,inplace=True)                 
 df1 = df['Price']      
-                 
-data.drop('customerID', axis = 1, inplace = True)                 
-
-X = df.drop('Price', axis=1)                 
-#removing Null values
-df = df.dropna()
-#Total number of null in each column
-df.isna().sum()
-                 
-data.isnull().sum()
 
 #And we will need to clean up 'Date of Publication'. So we will use a regular expression to extract our cleaned values:
 regex = r'^(\d{4})'
 extr = df['Date of Publication'].str.extract(r'^(\d{4})', expand=False)
 #Now lets convert these to a numeric type and copy them back:
+#Technically, this column still has object dtype, but we can easily get its numerical version with pd.to_numeric:
 df['Date of Publication'] = pd.to_numeric(extr)
 df['Date of Publication'].dtype
+#This results in about one in every ten values being missing, which is a small price to pay for now being able to do computations on the remaining valid values:
+df['Date of Publication'].isnull().sum() / len(df)
 
 #We can now use loc[] to do key-based locating:
 Or we could use iloc[] to access our entries by index (instead of by key):
@@ -146,6 +156,17 @@ df.loc[0:4,["Avg. Area Income", "Avg. Area House Age"]]
                  
 data['Day'], data['Month'] = data.Date.str[:2], data.Date.str[3:5]
 data = data.drop(['Unnamed: 0', 'Date'], axis = 1)
+
+#Here, condition is either an array-like object or a Boolean mask. then is the value to be used if condition evaluates to True, and else is the value to be used otherwise.
+#Essentially, .where() takes each element in the object used for condition, checks whether that particular element evaluates to True in the context of the condition, and returns an ndarray containing then or else, depending on which applies.
+#It can be nested into a compound if-then statement, allowing us to compute values based on multiple conditions:
+
+np.where(condition1, x1, 
+        np.where(condition2, x2, 
+            np.where(condition3, x3, ...)))
+df['Place of Publication'] = np.where(london, 'London',
+                                      np.where(oxford, 'Oxford',
+                                               pub.str.replace('-', ' ')))
 
 label_dict = defaultdict(LabelEncoder)
 
