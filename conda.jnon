@@ -1,0 +1,27 @@
+#From console!
+#------------------
+#packages
+conda list
+#version conda
+conda --version
+#list of evirements
+conda env list
+#create
+conda create -- name example
+conda create -- name example python=3.9
+#activate and change
+conda activate example
+#install libraries
+conda install jupyterlab dask pandas
+#launch
+jupyter-lab
+#end session
+Ctrl+C
+#deactivate
+conda deactivate
+#IDE - Integrated Development Environment = Text Editor+Integrated Build tools+Debbuger
+#VS Code or PyCharm!?  First!!!
+jupyter --version
+#launch
+jupyter notebook
+jupyter lab
